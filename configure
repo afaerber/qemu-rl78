@@ -3527,6 +3527,9 @@ case "$target_arch2" in
     target_phys_bits=64
     target_long_alignment=8
   ;;
+  78k0)
+    target_phys_bits=32
+  ;;
   alpha)
     target_phys_bits=64
     target_long_alignment=8
@@ -3613,6 +3616,11 @@ case "$target_arch2" in
     gdb_xml_files="power64-core.xml power-fpu.xml power-altivec.xml power-spe.xml"
     target_phys_bits=64
     target_libs_softmmu="$fdt_libs"
+  ;;
+  rl78)
+    TARGET_BASE_ARCH=78k0
+    TARGET_ABI_ARCH=78k0
+    target_phys_bits=32
   ;;
   sh4|sh4eb)
     TARGET_ARCH=sh4
