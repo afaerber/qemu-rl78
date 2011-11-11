@@ -387,6 +387,12 @@ obj-xtensa-y += core-dc232b.o
 obj-xtensa-y += core-dc233c.o
 obj-xtensa-y += core-fsf.o
 
+obj-rl78-y = rl78g13_pb.o
+
+ifeq ($(TARGET_ARCH),rl78)
+obj-78k0-y += $(obj-rl78-y)
+endif
+
 main.o: QEMU_CFLAGS+=$(GPROF_CFLAGS)
 
 monitor.o: hmp-commands.h qmp-commands-old.h
