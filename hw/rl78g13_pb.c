@@ -44,6 +44,7 @@ static void rl78g13_pb_init(ram_addr_t ram_size,
     MemoryRegion *code_flash = g_new(MemoryRegion, 1);
     ram_addr_t code_flash_size = 64 * 1024;
     char *filename;
+    int bios_size;
 
     /* init CPU */
     if (cpu_model == NULL) {
@@ -76,7 +77,13 @@ static void rl78g13_pb_init(ram_addr_t ram_size,
         fprintf(stderr, "BIOS file not found.\n");
         exit(1);
     }
+    bios_size = load_elf(filename, NULL, NULL, NULL,
+                         NULL, NULL, 0, ELF_MACHINE, 0);
     g_free(filename);
+    if (bios_size < 0 || bios_size > ram_size) {
+        hw_error("qemu: could not load RL78 bios '%s' (%d)\n", bios_name, bios_size);
+        exit(1);
+    }
 }
 
 static QEMUMachine rl78g13_pb_machine = {
