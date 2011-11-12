@@ -29,6 +29,8 @@
 
 #include "softfloat.h"
 
+#define ELF_MACHINE EM_RL78
+
 #define NB_MMU_MODES 1
 
 typedef struct CPU78K0State {
