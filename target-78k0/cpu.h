@@ -91,6 +91,8 @@ static inline CPU78K0State *cpu_init(const char *cpu_model)
     return &cpu->env;
 }
 
+void cpu_rl78_translate_init(void);
+
 int cpu_78k0_exec(CPU78K0State *env);
 void rl78_cpu_do_interrupt(CPUState *cpu);
 void rl78_cpu_dump_state(CPUState *cpu, FILE *f, fprintf_function cpu_fprintf,

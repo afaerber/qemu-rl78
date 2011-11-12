@@ -71,8 +71,14 @@ void cpu_78k0_list(FILE *f, fprintf_function cpu_fprintf)
 static void rl78_cpu_initfn(Object *obj)
 {
     RL78CPU *cpu = RL78_CPU(obj);
+    static bool tcg_initialized = false;
 
     cpu_exec_init(&cpu->env);
+
+    if (tcg_enabled() && !tcg_initialized) {
+        tcg_initialized = true;
+        cpu_rl78_translate_init();
+    }
 }
 
 static void rl78_cpu_class_init(ObjectClass *oc, void *data)
