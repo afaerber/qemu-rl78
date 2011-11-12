@@ -51,6 +51,8 @@ typedef struct RL78CPUClass {
     void (*parent_reset)(CPUState *cpu);
 } RL78CPUClass;
 
+#define ELF_MACHINE EM_RL78
+
 #define NB_MMU_MODES 1
 
 typedef struct CPU78K0State {
