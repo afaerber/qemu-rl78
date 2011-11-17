@@ -143,6 +143,10 @@ static inline void gen_intermediate_code_internal(RL78CPU *cpu,
             gen_io_start();
         }
 
+        if (unlikely(qemu_loglevel_mask(CPU_LOG_TB_OP))) {
+            tcg_gen_debug_insn_start(dc.pc);
+        }
+
         disas_rl78_insn(cpu, &dc);
 
         num_insns++;
