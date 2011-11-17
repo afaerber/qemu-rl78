@@ -42,6 +42,27 @@
 void tlb_fill(CPUState *env1, target_ulong addr, int is_write, int mmu_idx,
               void *retaddr)
 {
+    CPUState *saved_env;
+    unsigned long pc;
+    TranslationBlock *tb;
+    int ret;
+
+    saved_env = env;
+    env = env1;
+
+    ret = cpu_78k0_handle_mmu_fault(env, addr, is_write, mmu_idx);
+    if (unlikely(ret != 0)) {
+        if (retaddr != NULL) {
+            pc = (unsigned long)retaddr;
+            tb = tb_find_pc(pc);
+            if (tb != NULL) {
+                cpu_restore_state(tb, env, pc);
+            }
+        }
+        cpu_loop_exit(env);
+    }
+
+    env = saved_env;
 }
 
 #endif

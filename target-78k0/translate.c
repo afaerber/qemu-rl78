@@ -57,6 +57,14 @@ struct DisasContext {
 };
 
 
+void cpu_78k0_translate_init(void)
+{
+    cpu_env = tcg_global_reg_new_ptr(TCG_AREG0, "env");
+
+#define GEN_HELPER 2
+#include "helper.h"
+}
+
 static void disas_rl78_insn(DisasContext *s)
 {
     uint8_t opc;
@@ -85,6 +93,7 @@ static inline void gen_intermediate_code_internal(CPUState *env,
     target_ulong pc_start;
     uint16_t *gen_opc_end;
     int num_insns, max_insns;
+    uint32_t next_page_start;
     CPUBreakpoint *bp;
     int j, lj = -1;
 
@@ -95,6 +104,7 @@ static inline void gen_intermediate_code_internal(CPUState *env,
     dc.tb = tb;
 
     gen_opc_end = gen_opc_buf + OPC_MAX_SIZE;
+    next_page_start = (pc_start & TARGET_PAGE_MASK) + TARGET_PAGE_SIZE;
 
     num_insns = 0;
     max_insns = tb->cflags & CF_COUNT_MASK;
@@ -133,7 +143,7 @@ static inline void gen_intermediate_code_internal(CPUState *env,
             // TODO
         }
     } while (dc.is_jmp == DISAS_NEXT
-             && gen_opc_ptr < gen_opc_end && num_insns < max_insns
+             && gen_opc_ptr < gen_opc_end && dc.pc < next_page_start && num_insns < max_insns
              && !env->singlestep_enabled && !singlestep);
 
     /* Generate the return instruction */
@@ -167,6 +177,7 @@ void gen_intermediate_code_pc(CPUState *env, TranslationBlock *tb)
 void cpu_dump_state(CPUState *env, FILE *f, fprintf_function cpu_fprintf,
                     int flags)
 {
+    cpu_fprintf(f, "PC %05" PRIx32 "\n\n", env->pc);
 }
 
 void restore_state_to_opc(CPUState *env, TranslationBlock *tb, int pc_pos)

@@ -28,18 +28,27 @@
 
 void cpu_reset(CPUState *env)
 {
+    tlb_flush(env, 1);
+
+    memset(env, 0, offsetof(CPUState, breakpoints));
 }
 
 CPUState *cpu_78k0_init(const char *cpu_model)
 {
+    static bool tcg_initialized = false;
     CPUState *env;
 
     env = g_malloc0(sizeof(CPUState));
     cpu_exec_init(env);
+    if (!tcg_initialized) {
+        tcg_initialized = true;
+        cpu_78k0_translate_init();
+    }
 
     env->cpu_model_str = cpu_model;
     cpu_reset(env);
     qemu_init_vcpu(env);
+    printf("end init\n");
     return env;
 }
 
@@ -54,6 +63,18 @@ void cpu_78k0_close(CPUState *env)
 
 #if !defined(CONFIG_USER_ONLY)
 
+int cpu_78k0_handle_mmu_fault(CPUState *env, target_ulong address, int rw,
+                              int mmu_idx)
+{
+    int prot;
+
+    address &= TARGET_PAGE_MASK;
+    prot = PAGE_BITS;
+    tlb_set_page(env, address, address, prot, mmu_idx, TARGET_PAGE_SIZE);
+
+    return 0;
+}
+
 /* Handle a CPU exception.  */
 void do_interrupt(CPUState *env)
 {
@@ -62,11 +83,9 @@ void do_interrupt(CPUState *env)
 
 target_phys_addr_t cpu_get_phys_page_debug(CPUState *env, target_ulong addr)
 {
-    uint32_t phys_addr;
+    target_phys_addr_t phys_addr = addr;
 
-    phys_addr = addr;
-
-    return phys_addr;
+    return phys_addr & TARGET_PAGE_MASK;
 }
 
 #endif

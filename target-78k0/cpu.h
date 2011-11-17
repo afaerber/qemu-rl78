@@ -43,11 +43,15 @@ typedef struct CPU78K0State {
 } CPU78K0State;
 
 CPU78K0State *cpu_78k0_init(const char *cpu_model);
+void cpu_78k0_translate_init(void);
 int cpu_78k0_exec(CPU78K0State *s);
 void cpu_78k0_close(CPU78K0State *s);
 void do_interrupt(CPU78K0State *);
 
 void cpu_78k0_list(FILE *f, fprintf_function cpu_fprintf);
+
+int cpu_78k0_handle_mmu_fault(CPU78K0State *env, target_ulong address, int rw,
+                              int mmu_idx);
 
 
 #define TARGET_PAGE_BITS 12
@@ -63,6 +67,7 @@ void cpu_78k0_list(FILE *f, fprintf_function cpu_fprintf);
 #define cpu_init cpu_78k0_init
 #define cpu_exec cpu_78k0_exec
 #define cpu_list cpu_78k0_list
+#define cpu_handle_mmu_fault cpu_78k0_handle_mmu_fault
 
 static inline int cpu_mmu_index(CPUState *env)
 {
@@ -70,6 +75,11 @@ static inline int cpu_mmu_index(CPUState *env)
 }
 
 #include "cpu-all.h"
+
+static inline target_ulong cpu_get_pc(CPUState *env)
+{
+    return env->pc;
+}
 
 static inline void cpu_get_tb_cpu_state(CPUState *env, target_ulong *pc,
                                         target_ulong *cs_base, int *flags)
