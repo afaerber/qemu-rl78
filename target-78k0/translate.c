@@ -139,6 +139,10 @@ static inline void gen_intermediate_code_internal(RL78CPU *cpu,
             tcg_ctx.gen_opc_icount[lj] = num_insns;
         }
 
+        if (num_insns + 1 == max_insns && (tb->cflags & CF_LAST_IO)) {
+            gen_io_start();
+        }
+
         disas_rl78_insn(cpu, &dc);
 
         num_insns++;
@@ -149,6 +153,10 @@ static inline void gen_intermediate_code_internal(RL78CPU *cpu,
              && tcg_ctx.gen_opc_ptr < gen_opc_end
              && dc.pc < next_page_start && num_insns < max_insns
              && !cs->singlestep_enabled && !singlestep);
+
+    if (tb->cflags & CF_LAST_IO) {
+        gen_io_end();
+    }
 
     /* Generate the return instruction */
     if (dc.is_jmp != DISAS_TB_JUMP) {
