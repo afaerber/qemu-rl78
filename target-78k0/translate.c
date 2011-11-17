@@ -96,6 +96,7 @@ static inline void gen_intermediate_code_internal(RL78CPU *cpu,
     target_ulong pc_start;
     uint16_t *gen_opc_end;
     int num_insns, max_insns;
+    uint32_t next_page_start;
     CPUBreakpoint *bp;
     int j, lj = -1;
 
@@ -106,6 +107,7 @@ static inline void gen_intermediate_code_internal(RL78CPU *cpu,
     dc.tb = tb;
 
     gen_opc_end = tcg_ctx.gen_opc_buf + OPC_MAX_SIZE;
+    next_page_start = (pc_start & TARGET_PAGE_MASK) + TARGET_PAGE_SIZE;
 
     num_insns = 0;
     max_insns = tb->cflags & CF_COUNT_MASK;
@@ -144,7 +146,8 @@ static inline void gen_intermediate_code_internal(RL78CPU *cpu,
             // TODO
         }
     } while (dc.is_jmp == DISAS_NEXT
-             && tcg_ctx.gen_opc_ptr < gen_opc_end && num_insns < max_insns
+             && tcg_ctx.gen_opc_ptr < gen_opc_end
+             && dc.pc < next_page_start && num_insns < max_insns
              && !cs->singlestep_enabled && !singlestep);
 
     /* Generate the return instruction */
@@ -183,4 +186,7 @@ void restore_state_to_opc(CPU78K0State *env, TranslationBlock *tb, int pc_pos)
 void rl78_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
                          int flags)
 {
+    RL78CPU *cpu = RL78_CPU(cs);
+
+    cpu_fprintf(f, "PC %05" PRIx32 "\n\n", cpu->env.pc);
 }

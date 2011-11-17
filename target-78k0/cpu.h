@@ -101,6 +101,9 @@ hwaddr rl78_cpu_get_phys_page_debug(CPUState *cpu, vaddr addr);
 
 void cpu_78k0_list(FILE *f, fprintf_function cpu_fprintf);
 
+int cpu_78k0_handle_mmu_fault(CPU78K0State *env, target_ulong address, int rw,
+                              int mmu_idx);
+
 
 #define TARGET_PAGE_BITS 12
 
@@ -114,6 +117,7 @@ void cpu_78k0_list(FILE *f, fprintf_function cpu_fprintf);
 
 #define cpu_exec cpu_78k0_exec
 #define cpu_list cpu_78k0_list
+#define cpu_handle_mmu_fault cpu_78k0_handle_mmu_fault
 
 static inline int cpu_mmu_index(CPU78K0State *env)
 {

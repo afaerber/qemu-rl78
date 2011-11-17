@@ -41,9 +41,30 @@
 #define SHIFT 3
 #include "exec/softmmu_template.h"
 
-void tlb_fill(CPU78K0State *env1, target_ulong addr, int is_write, int mmu_idx,
+void tlb_fill(CPU78K0State *env, target_ulong addr, int is_write, int mmu_idx,
               uintptr_t retaddr)
 {
+    int ret;
+
+    ret = cpu_78k0_handle_mmu_fault(env, addr, is_write, mmu_idx);
+    if (unlikely(ret != 0)) {
+        if (retaddr != (uintptr_t)0) {
+            cpu_restore_state(env, retaddr);
+        }
+        cpu_loop_exit(env);
+    }
+}
+
+int cpu_78k0_handle_mmu_fault(CPU78K0State *env, target_ulong address, int rw,
+                              int mmu_idx)
+{
+    int prot;
+
+    address &= TARGET_PAGE_MASK;
+    prot = PAGE_BITS;
+    tlb_set_page(env, address, address, prot, mmu_idx, TARGET_PAGE_SIZE);
+
+    return 0;
 }
 
 /* Handle a CPU exception.  */
