@@ -26,6 +26,8 @@
 /* global register indexes */
 static TCGv_ptr cpu_env;
 
+static TCGv env_pc;
+
 #include "helper.h"
 #define GEN_HELPER 1
 #include "helper.h"
@@ -57,6 +59,8 @@ void cpu_rl78_translate_init(void)
 {
     cpu_env = tcg_global_reg_new_ptr(TCG_AREG0, "env");
 
+    env_pc = tcg_global_mem_new(TCG_AREG0, offsetof(CPU78K0State, pc), "pc");
+
 #define GEN_HELPER 2
 #include "helper.h"
 }
@@ -78,6 +82,8 @@ static void disas_rl78_insn(RL78CPU *cpu, DisasContext *s)
     } else {
         qemu_log("unimplemented opcode 0x%" PRIx8 "\n", opc);
         // TODO
+        tcg_gen_movi_tl(env_pc, s->pc);
+        s->is_jmp = DISAS_UPDATE;
         ins_len = 1;
     }
 
@@ -162,7 +168,15 @@ static inline void gen_intermediate_code_internal(RL78CPU *cpu,
         gen_io_end();
     }
 
-    /* Generate the return instruction */
+    if (unlikely(cs->singlestep_enabled)) {
+        if (dc.is_jmp == DISAS_NEXT) {
+            tcg_gen_movi_tl(env_pc, dc.pc);
+        }
+    } else {
+        if (dc.is_jmp == DISAS_NEXT) {
+            tcg_gen_movi_tl(env_pc, dc.pc);
+        }
+    }
     if (dc.is_jmp != DISAS_TB_JUMP) {
         tcg_gen_exit_tb(0);
     }
