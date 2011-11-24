@@ -41,6 +41,7 @@ static void rl78g13_pb_init(QEMUMachineInitArgs *args)
     MemoryRegion *code_flash = g_new(MemoryRegion, 1);
     ram_addr_t code_flash_size = 64 * 1024;
     const char *cpu_model = args->cpu_model;
+    Error *err = NULL;
     char *filename;
     int bios_size;
 
@@ -48,11 +49,7 @@ static void rl78g13_pb_init(QEMUMachineInitArgs *args)
     if (cpu_model == NULL) {
         cpu_model = "g13";
     }
-    cpu = cpu_rl78_init(cpu_model);
-    if (cpu == NULL) {
-        error_report("Unable to find RL78 CPU definition");
-        exit(1);
-    }
+    cpu = RL78_CPU(object_new(TYPE_RL78_CPU));
 
     /* allocate RAM */
     if (ram_size > 4096) {
@@ -65,6 +62,7 @@ static void rl78g13_pb_init(QEMUMachineInitArgs *args)
 
     /* allocate flash */
     memory_region_init_ram(code_flash, NULL, "rl78g13_pb.code_flash", code_flash_size);
+    memory_region_set_readonly(code_flash, true);
     memory_region_add_subregion(get_system_memory(), CODE_FLASH_START, code_flash);
     if (bios_name == NULL) {
         fprintf(stderr, "Must specify BIOS file name.\n");
@@ -80,6 +78,13 @@ static void rl78g13_pb_init(QEMUMachineInitArgs *args)
     g_free(filename);
     if (bios_size < 0 || bios_size > ram_size) {
         hw_error("qemu: could not load RL78 bios '%s' (%d)\n", bios_name, bios_size);
+        exit(1);
+    }
+
+    object_property_set_bool(OBJECT(cpu), true, "realized", &err);
+    if (err != NULL) {
+        fprintf(stderr, "%s\n", error_get_pretty(err));
+        error_free(err);
         exit(1);
     }
 }

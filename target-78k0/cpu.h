@@ -27,6 +27,7 @@
 #include "qemu-common.h"
 #include "exec/cpu-defs.h"
 #include "qom/cpu.h"
+#include "error.h"
 
 #include "fpu/softfloat.h"
 
