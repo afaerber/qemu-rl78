@@ -77,9 +77,23 @@ static void disas_rl78_insn(DisasContext *s)
     opc = ldub_code(s->pc);
 
     switch (opc) {
+    case 0xCF: /* MOV !addr16,#byte */
+        ins_len = 4;
+        {
+            uint16_t addr16 = lduw_code(s->pc + 1);
+            uint8_t data = ldub_code(s->pc + 3);
+            LOG_ASM("MOV !%04" PRIx16 "H, #%02" PRIx8 "\n", addr16, data);
+            TCGv addr = tcg_const_tl(0xF0000 | addr16);
+            TCGv value = tcg_const_tl(data);
+            tcg_gen_qemu_st8(value, addr, 0);
+            tcg_temp_free(addr);
+            tcg_temp_free(value);
+        }
+        break;
     default:
         qemu_log("unimplemented opcode 0x%" PRIx8 "\n", opc);
         // TODO
+        s->is_jmp = DISAS_UPDATE;
         break;
     }
 
