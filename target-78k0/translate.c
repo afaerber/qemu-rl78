@@ -67,7 +67,23 @@ void cpu_rl78_translate_init(void)
 
 typedef int (*OpcodeHandler)(RL78CPU *cpu, uint8_t opcode, DisasContext *s);
 
+/* MOV !addr16,#byte */
+static int rl78_disas_mov_addr16_byte(RL78CPU *cpu, uint8_t opcode, DisasContext *s)
+{
+    uint16_t addr16 = cpu_lduw_code(&cpu->env, s->pc + 1);
+    uint8_t data = cpu_ldub_code(&cpu->env, s->pc + 3);
+    TCGv addr = tcg_const_tl(0xF0000 | addr16);
+    TCGv value = tcg_const_tl(data);
+
+    LOG_ASM("MOV !%04" PRIx16 "H, #%02" PRIx8 "\n", addr16, data);
+    tcg_gen_qemu_st8(value, addr, 0);
+    tcg_temp_free(addr);
+    tcg_temp_free(value);
+    return 4;
+}
+
 static const OpcodeHandler rl78_1st_map[256] = {
+    [0xCF] = rl78_disas_mov_addr16_byte,
 };
 
 static void disas_rl78_insn(RL78CPU *cpu, DisasContext *s)
