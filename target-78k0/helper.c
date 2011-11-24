@@ -24,13 +24,27 @@
 #include "gdbstub.h"
 #include "helper.h"
 #include "qemu-common.h"
+#ifndef CONFIG_USER_ONLY
+#include "hw/loader.h" /* for rom_ptr() */
+#endif
 
 
 void cpu_reset(CPUState *env)
 {
+    uint8_t *rom;
+    uint16_t reset_vector;
+
     tlb_flush(env, 1);
 
     memset(env, 0, offsetof(CPUState, breakpoints));
+
+    rom = rom_ptr(0x00000);
+    if (rom == NULL) {
+        reset_vector = 0;
+    } else {
+        reset_vector = lduw_p(rom);
+    }
+    env->pc = reset_vector;
 }
 
 CPUState *cpu_78k0_init(const char *cpu_model)
