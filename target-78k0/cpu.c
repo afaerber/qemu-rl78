@@ -20,6 +20,9 @@
 #include "cpu.h"
 #include "qemu-common.h"
 #include "error.h"
+#ifndef CONFIG_USER_ONLY
+#include "hw/loader.h" /* for rom_ptr() */
+#endif
 
 
 /* CPUClass::reset() */
@@ -27,12 +30,22 @@ static void rl78_cpu_reset(CPUState *cs)
 {
     RL78CPU *cpu = RL78_CPU(cs);
     RL78CPUClass *rcc = RL78_CPU_GET_CLASS(cs);
+    uint8_t *rom;
+    uint16_t reset_vector;
 
     rcc->parent_reset(cs);
 
     tlb_flush(&cpu->env, 1);
 
     memset(&cpu->env, 0, offsetof(CPU78K0State, breakpoints));
+
+    rom = rom_ptr(0x00000);
+    if (rom == NULL) {
+        reset_vector = 0;
+    } else {
+        reset_vector = lduw_p(rom);
+    }
+    cpu->env.pc = reset_vector;
 }
 
 static void rl78_cpu_set_pc(CPUState *cs, vaddr value)
