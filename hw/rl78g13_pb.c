@@ -42,6 +42,7 @@ static void rl78g13_pb_init(ram_addr_t ram_size,
     CPUState *env = NULL;
     MemoryRegion *ram = g_new(MemoryRegion, 1);
     MemoryRegion *code_flash = g_new(MemoryRegion, 1);
+    MemoryRegion *sfr = g_new(MemoryRegion, 1);
     ram_addr_t code_flash_size = 64 * 1024;
     char *filename;
     int bios_size;
@@ -80,6 +81,10 @@ static void rl78g13_pb_init(ram_addr_t ram_size,
         hw_error("qemu: could not load RL78 bios '%s' (%d)\n", bios_name, bios_size);
         exit(1);
     }
+
+    /* allocate SFR area */
+    memory_region_init_ram(sfr, "rl78g13_pb.sfr", 256);
+    memory_region_add_subregion(get_system_memory(), 0xFFF00, sfr);
 
     env = cpu_init(cpu_model);
     if (env == NULL) {
