@@ -77,6 +77,19 @@ static void disas_rl78_insn(DisasContext *s)
     opc = ldub_code(s->pc);
 
     switch (opc) {
+    case 0xCB: /* MOVW sfrp,#word */
+        ins_len = 4;
+        {
+            uint8_t sfrp = ldub_code(s->pc + 1) & ~0x1;
+            uint16_t data = lduw_code(s->pc + 2);
+            LOG_ASM("MOVW %02" PRIx8 "H, #%04" PRIx16 "H\n", sfrp, data);
+            TCGv addr = tcg_const_tl(0xFFF00 | sfrp);
+            TCGv val = tcg_const_tl(data);
+            tcg_gen_qemu_st16(val, addr, 0);
+            tcg_temp_free(addr);
+            tcg_temp_free(val);
+        }
+        break;
     case 0xCF: /* MOV !addr16,#byte */
         ins_len = 4;
         {
