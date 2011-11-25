@@ -82,7 +82,23 @@ static int rl78_disas_mov_addr16_byte(RL78CPU *cpu, uint8_t opcode, DisasContext
     return 4;
 }
 
+/* MOVW sfrp,#word */
+static int rl78_disas_movw_sfrp_word(RL78CPU *cpu, uint8_t opcode, DisasContext *s)
+{
+    uint8_t sfrp = cpu_ldub_code(&cpu->env, s->pc + 1) & ~0x1;
+    uint16_t data = cpu_lduw_code(&cpu->env, s->pc + 2);
+    TCGv addr = tcg_const_tl(0xFFF00 | sfrp);
+    TCGv val = tcg_const_tl(data);
+
+    LOG_ASM("MOVW %02" PRIx8 "H, #%04" PRIx16 "H\n", sfrp, data);
+    tcg_gen_qemu_st16(val, addr, 0);
+    tcg_temp_free(addr);
+    tcg_temp_free(val);
+    return 4;
+}
+
 static const OpcodeHandler rl78_1st_map[256] = {
+    [0xCB] = rl78_disas_movw_sfrp_word,
     [0xCF] = rl78_disas_mov_addr16_byte,
 };
 
