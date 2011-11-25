@@ -42,6 +42,7 @@ static void rl78g13_pb_init(ram_addr_t ram_size,
     CPUState *env = NULL;
     MemoryRegion *ram = g_new(MemoryRegion, 1);
     MemoryRegion *code_flash = g_new(MemoryRegion, 1);
+    MemoryRegion *gpr = g_new(MemoryRegion, 1);
     MemoryRegion *sfr = g_new(MemoryRegion, 1);
     ram_addr_t code_flash_size = 64 * 1024;
     char *filename;
@@ -60,6 +61,8 @@ static void rl78g13_pb_init(ram_addr_t ram_size,
     ram_size = 4 * 1024;
     memory_region_init_ram(ram, "rl78g13_pb.ram", ram_size);
     memory_region_add_subregion(get_system_memory(), RAM_END - (ram_size - 1), ram);
+    memory_region_init_ram(gpr, "rl78g13_pb.gpr", 32);
+    memory_region_add_subregion(ram, ram_size - 32, gpr);
 
     /* allocate flash */
     memory_region_init_ram(code_flash, "rl78g13_pb.code_flash", code_flash_size);
