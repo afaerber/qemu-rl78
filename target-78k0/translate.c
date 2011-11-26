@@ -31,6 +31,7 @@
 static TCGv_ptr cpu_env;
 
 static TCGv env_pc;
+static TCGv_i32 cpu_sp;
 
 #include "helper.h"
 #define GEN_HELPER 1
@@ -64,6 +65,7 @@ void cpu_78k0_translate_init(void)
     cpu_env = tcg_global_reg_new_ptr(TCG_AREG0, "env");
 
     env_pc = tcg_global_mem_new(TCG_AREG0, offsetof(CPUState, pc), "pc");
+    cpu_sp = tcg_global_mem_new_i32(TCG_AREG0, offsetof(CPUState, sp), "sp");
 
 #define GEN_HELPER 2
 #include "helper.h"
@@ -228,7 +230,8 @@ void gen_intermediate_code_pc(CPUState *env, TranslationBlock *tb)
 void cpu_dump_state(CPUState *env, FILE *f, fprintf_function cpu_fprintf,
                     int flags)
 {
-    cpu_fprintf(f, "PC %05" PRIx32 "\n\n", env->pc);
+    cpu_fprintf(f, "PC %05" PRIx32 "\n", env->pc);
+    cpu_fprintf(f, "SP  %04" PRIx32 "\n", env->sp);
 }
 
 void restore_state_to_opc(CPUState *env, TranslationBlock *tb, int pc_pos)
