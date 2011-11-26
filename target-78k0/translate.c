@@ -27,6 +27,7 @@
 static TCGv_ptr cpu_env;
 
 static TCGv env_pc;
+static TCGv_i32 cpu_sp;
 
 #include "helper.h"
 #define GEN_HELPER 1
@@ -60,6 +61,7 @@ void cpu_rl78_translate_init(void)
     cpu_env = tcg_global_reg_new_ptr(TCG_AREG0, "env");
 
     env_pc = tcg_global_mem_new(TCG_AREG0, offsetof(CPU78K0State, pc), "pc");
+    cpu_sp = tcg_global_mem_new_i32(TCG_AREG0, offsetof(CPU78K0State, sp), "sp");
 
 #define GEN_HELPER 2
 #include "helper.h"
@@ -247,4 +249,5 @@ void rl78_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
     RL78CPU *cpu = RL78_CPU(cs);
 
     cpu_fprintf(f, "PC %05" PRIx32 "\n\n", cpu->env.pc);
+    cpu_fprintf(f, "SP  %04" PRIx32 "\n", cpu->env.sp);
 }
