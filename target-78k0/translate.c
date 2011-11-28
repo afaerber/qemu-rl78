@@ -81,6 +81,32 @@ void cpu_78k0_translate_init(void)
 #include "helper.h"
 }
 
+enum PSWBitShifts {
+    PSW_CY_SHIFT   = 0,
+    PSW_ISP0_SHIFT = 1,
+    PSW_ISP1_SHIFT = 2,
+    PSW_RBS0_SHIFT = 3,
+    PSW_AC_SHIFT   = 4,
+    PSW_RBS1_SHIFT = 5,
+    PSW_Z_SHIFT    = 6,
+    PSW_IE_SHIFT   = 7,
+};
+
+static void gen_select_bank(unsigned int bank)
+{
+    TCGv_i32 tmp, val;
+    LOG_ASM("SEL RB%u\n", bank);
+    assert(bank <= 3);
+    tmp = tcg_temp_new_i32();
+    val = tcg_const_i32(bank & 0x1);
+    tcg_gen_deposit_i32(tmp, cpu_psw, val, PSW_RBS0_SHIFT, 1);
+    tcg_gen_movi_i32(val, (bank >> 1) & 0x1);
+    tcg_gen_deposit_i32(tmp, tmp, val, PSW_RBS1_SHIFT, 1);
+    tcg_gen_mov_i32(cpu_psw, tmp);
+    tcg_temp_free_i32(val);
+    tcg_temp_free_i32(tmp);
+}
+
 static void disas_rl78_insn(DisasContext *s)
 {
     uint8_t opc, opc2;
@@ -132,6 +158,12 @@ static void disas_rl78_insn(DisasContext *s)
         opc2 = ldub_code(s->pc + 1);
         ins_len++;
         switch (opc2) {
+        case 0xcf: /* SEL RB0 */
+        case 0xdf: /* SEL RB1 */
+        case 0xef: /* SEL RB2 */
+        case 0xff: /* SEL RB3 */
+            gen_select_bank((opc2 >> 4) - 0xc);
+            break;
         default:
             qemu_log("unimplemented 0x%" PRIx8 " opcode 0x%" PRIx8 "\n", opc, opc2);
             // TODO
