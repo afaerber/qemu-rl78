@@ -31,6 +31,7 @@
 static TCGv_ptr cpu_env;
 
 static TCGv env_pc;
+static TCGv_i32 cpu_psw;
 static TCGv_i32 cpu_sp;
 #ifdef TARGET_RL78
 static TCGv_i32 cpu_es;
@@ -69,6 +70,7 @@ void cpu_78k0_translate_init(void)
     cpu_env = tcg_global_reg_new_ptr(TCG_AREG0, "env");
 
     env_pc = tcg_global_mem_new(TCG_AREG0, offsetof(CPUState, pc), "pc");
+    cpu_psw = tcg_global_mem_new_i32(TCG_AREG0, offsetof(CPUState, psw), "psw");
     cpu_sp = tcg_global_mem_new_i32(TCG_AREG0, offsetof(CPUState, sp), "sp");
 #ifdef TARGET_RL78
     cpu_es = tcg_global_mem_new_i32(TCG_AREG0, offsetof(CPUState, es), "es");
@@ -266,6 +268,7 @@ void cpu_dump_state(CPUState *env, FILE *f, fprintf_function cpu_fprintf,
 {
     cpu_fprintf(f, "PC %05" PRIx32 "\n", env->pc);
     cpu_fprintf(f, "SP  %04" PRIx32 "\n", env->sp);
+    cpu_fprintf(f, "PSW   %02" PRIx32 "\n", env->psw);
 #ifdef TARGET_RL78
     cpu_fprintf(f, "ES    %02" PRIx32 "\n", env->es);
     cpu_fprintf(f, "CS    %02" PRIx32 "\n", env->cs);
