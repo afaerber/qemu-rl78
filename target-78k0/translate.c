@@ -95,6 +95,77 @@ enum PSWBitShifts {
     PSW_IE_SHIFT   = 7,
 };
 
+static void gen_get_bank(TCGv_i32 ret)
+{
+    TCGv_i32 rbs0, rbs1;
+    rbs0 = tcg_temp_new_i32();
+    tcg_gen_shri_i32(rbs0, cpu_psw, PSW_RBS0_SHIFT);
+    tcg_gen_andi_i32(rbs0, rbs0, 0x1);
+    rbs1 = tcg_temp_new_i32();
+    tcg_gen_shri_i32(rbs1, cpu_psw, PSW_RBS1_SHIFT - 1);
+    tcg_gen_andi_i32(rbs1, rbs1, 0x2);
+    tcg_gen_or_i32(ret, rbs0, rbs1);
+    tcg_temp_free_i32(rbs0);
+    tcg_temp_free_i32(rbs1);
+}
+
+#define GPR_START 0xffee0
+
+typedef enum {
+    REG_X = 0,
+    REG_A,
+    REG_C,
+    REG_B,
+    REG_E,
+    REG_D,
+    REG_L,
+    REG_H,
+} RL78GPR8;
+
+typedef enum {
+    RP_AX = 0,
+    RP_BC = 2,
+    RP_DE = 4,
+    RP_HL = 6,
+} RL78GPR16;
+
+static void gen_get_bank_addr(TCGv ret)
+{
+    TCGv tmp;
+    TCGv_i32 bank = tcg_temp_new_i32();
+    gen_get_bank(bank);
+    tcg_gen_muli_i32(bank, bank, 8);
+    tmp = tcg_temp_new();
+    tcg_gen_extu_i32_tl(tmp, bank);
+    tcg_temp_free_i32(bank);
+    tcg_gen_movi_tl(ret, GPR_START + 3 * 8);
+    tcg_gen_sub_tl(ret, ret, tmp);
+    tcg_temp_free(tmp);
+}
+
+static void gen_get_gpr_addr16(TCGv ret, RL78GPR16 reg)
+{
+    gen_get_bank_addr(ret);
+    tcg_gen_addi_tl(ret, ret, reg);
+}
+
+static void gen_gpr_st16(RL78GPR16 reg, TCGv val)
+{
+    TCGv addr = tcg_temp_new();
+    gen_get_gpr_addr16(addr, reg);
+    tcg_gen_qemu_st16(val, addr, 0);
+    tcg_temp_free(addr);
+}
+
+static void gen_movw_rp_word(RL78GPR16 regpair, uint16_t data)
+{
+    TCGv value;
+    LOG_ASM("MOVW %s, #%04" PRIx16 "H\n", gpr16_names[regpair / 2], data);
+    value = tcg_const_tl(data);
+    gen_gpr_st16(regpair, value);
+    tcg_temp_free(value);
+}
+
 static void gen_select_bank(unsigned int bank)
 {
     TCGv_i32 tmp, val;
@@ -118,6 +189,13 @@ static void disas_rl78_insn(DisasContext *s)
     opc = ldub_code(s->pc);
 
     switch (opc) {
+    case 0x30: /* MOVW AX, #word */
+    case 0x32: /* MOVW BC, #word */
+    case 0x34: /* MOVW DE, #word */
+    case 0x36: /* MOVW HL, #word */
+        ins_len = 3;
+        gen_movw_rp_word(opc & 0xf, lduw_code(s->pc + 1));
+        break;
 #ifdef TARGET_RL78
     case 0x41: /* MOV ES, #byte */
         ins_len = 2;
