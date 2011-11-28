@@ -77,9 +77,46 @@ void cpu_rl78_translate_init(void)
 #include "helper.h"
 }
 
+enum PSWBitShifts {
+    PSW_CY_SHIFT   = 0,
+    PSW_ISP0_SHIFT = 1,
+    PSW_ISP1_SHIFT = 2,
+    PSW_RBS0_SHIFT = 3,
+    PSW_AC_SHIFT   = 4,
+    PSW_RBS1_SHIFT = 5,
+    PSW_Z_SHIFT    = 6,
+    PSW_IE_SHIFT   = 7,
+};
+
 typedef int (*OpcodeHandler)(RL78CPU *cpu, uint8_t opcode, DisasContext *s);
 
+/* SEL RB0  (0xcf)
+ * SEL RB1  (0xdf)
+ * SEL RB2  (0xef)
+ * SEL RB3  (0xff) */
+static int rl78_disas_sel_rb(RL78CPU *cpu, uint8_t opcode, DisasContext *s)
+{
+    unsigned int bank = (opcode >> 4) - 0xc;
+    TCGv_i32 tmp, val;
+
+    LOG_ASM("SEL RB%u\n", bank);
+    assert(bank <= 3);
+    tmp = tcg_temp_new_i32();
+    val = tcg_const_i32(bank & 0x1);
+    tcg_gen_deposit_i32(tmp, cpu_psw, val, PSW_RBS0_SHIFT, 1);
+    tcg_gen_movi_i32(val, (bank >> 1) & 0x1);
+    tcg_gen_deposit_i32(tmp, tmp, val, PSW_RBS1_SHIFT, 1);
+    tcg_gen_mov_i32(cpu_psw, tmp);
+    tcg_temp_free_i32(val);
+    tcg_temp_free_i32(tmp);
+    return 2;
+}
+
 static const OpcodeHandler rl78_2nd_map[256] = {
+    [0xcf] = rl78_disas_sel_rb,
+    [0xdf] = rl78_disas_sel_rb,
+    [0xef] = rl78_disas_sel_rb,
+    [0xff] = rl78_disas_sel_rb,
 };
 
 /* MOV !addr16,#byte */
