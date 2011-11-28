@@ -39,7 +39,10 @@ static void rl78_cpu_reset(CPUState *cs)
 
     memset(&cpu->env, 0, offsetof(CPU78K0State, breakpoints));
 #ifdef TARGET_RL78
+    cpu->env.psw = 0x06;
     cpu->env.es = 0x0f;
+#else
+    cpu->env.psw = 0x02;
 #endif
 
     rom = rom_ptr(0x00000);
