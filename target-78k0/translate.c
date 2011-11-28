@@ -77,6 +77,9 @@ void cpu_rl78_translate_init(void)
 
 typedef int (*OpcodeHandler)(RL78CPU *cpu, uint8_t opcode, DisasContext *s);
 
+static const OpcodeHandler rl78_2nd_map[256] = {
+};
+
 /* MOV !addr16,#byte */
 static int rl78_disas_mov_addr16_byte(RL78CPU *cpu, uint8_t opcode, DisasContext *s)
 {
@@ -121,10 +124,29 @@ static int rl78_disas_mov_es_byte(RL78CPU *cpu, uint8_t opcode, DisasContext *s)
 }
 #endif
 
+/* 2nd MAP */
+static int rl78_disas_2nd_map(RL78CPU *cpu, uint8_t opc, DisasContext *s)
+{
+    uint8_t opc2;
+
+    opc2 = cpu_ldub_code(&cpu->env, s->pc + 1);
+
+    if (likely(rl78_2nd_map[opc2] != NULL)) {
+        return rl78_2nd_map[opc2](cpu, opc2, s);
+    } else {
+        qemu_log("unimplemented 0x%" PRIx8 " opcode 0x%" PRIx8 "\n", opc, opc2);
+        // TODO
+        tcg_gen_movi_tl(env_pc, s->pc);
+        s->is_jmp = DISAS_UPDATE;
+        return 2;
+    }
+}
+
 static const OpcodeHandler rl78_1st_map[256] = {
 #ifdef TARGET_RL78
     [0x41] = rl78_disas_mov_es_byte,
 #endif
+    [0x61] = rl78_disas_2nd_map,
     [0xCB] = rl78_disas_movw_sfrp_word,
     [0xCF] = rl78_disas_mov_addr16_byte,
 };
