@@ -108,6 +108,7 @@ static void disas_rl78_insn(DisasContext *s)
     default:
         qemu_log("unimplemented opcode 0x%" PRIx8 "\n", opc);
         // TODO
+        tcg_gen_movi_tl(env_pc, s->pc);
         s->is_jmp = DISAS_UPDATE;
         break;
     }
