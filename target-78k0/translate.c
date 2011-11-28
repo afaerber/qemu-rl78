@@ -38,6 +38,9 @@ static TCGv_i32 cpu_es;
 static TCGv_i32 cpu_cs;
 #endif
 
+static const char* gpr8_names[] = { "X", "A", "C", "B", "E", "D", "L", "H" };
+static const char* gpr16_names[] = { "AX", "BC", "DE", "HL" };
+
 #include "helper.h"
 #define GEN_HELPER 1
 #include "helper.h"
@@ -298,6 +301,8 @@ void gen_intermediate_code_pc(CPUState *env, TranslationBlock *tb)
 void cpu_dump_state(CPUState *env, FILE *f, fprintf_function cpu_fprintf,
                     int flags)
 {
+    int i, j;
+
     cpu_fprintf(f, "PC %05" PRIx32 "\n", env->pc);
     cpu_fprintf(f, "SP  %04" PRIx32 "\n", env->sp);
     cpu_fprintf(f, "PSW   %02" PRIx32 "\n", env->psw);
@@ -305,6 +310,26 @@ void cpu_dump_state(CPUState *env, FILE *f, fprintf_function cpu_fprintf,
     cpu_fprintf(f, "ES    %02" PRIx32 "\n", env->es);
     cpu_fprintf(f, "CS    %02" PRIx32 "\n", env->cs);
 #endif
+
+    cpu_fprintf(f, "\n");
+    for (i = 0; i < 4; i++) {
+        cpu_fprintf(f, "BANK%d           ", i);
+    }
+    cpu_fprintf(f, "\n");
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 4; j++) {
+            target_phys_addr_t bank_addr = GPR_START + (3 - j) * 8;
+            if ((i % 2) == 0) {
+                cpu_fprintf(f, " %s %04" PRIx16 "  %s %02" PRIx8 "  ",
+                            gpr16_names[i / 2], lduw_phys(bank_addr + i),
+                            gpr8_names[i], ldub_phys(bank_addr + i));
+            } else {
+                cpu_fprintf(f, "          %s %02" PRIx8 "  ",
+                            gpr8_names[i], ldub_phys(bank_addr + i));
+            }
+        }
+        cpu_fprintf(f, "\n");
+    }
 }
 
 void restore_state_to_opc(CPUState *env, TranslationBlock *tb, int pc_pos)
