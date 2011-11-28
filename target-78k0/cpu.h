@@ -37,6 +37,10 @@ typedef struct CPU78K0State {
     target_ulong pc; /* 20/16 bits */
     uint32_t psw; /* 8 bits */
     uint32_t sp; /* 16 bits */
+#ifdef TARGET_RL78
+    uint32_t es; /* 8 bits */
+    uint32_t cs; /* 8 bits */
+#endif
 
     CPU_COMMON
 

@@ -32,6 +32,10 @@ static TCGv_ptr cpu_env;
 
 static TCGv env_pc;
 static TCGv_i32 cpu_sp;
+#ifdef TARGET_RL78
+static TCGv_i32 cpu_es;
+static TCGv_i32 cpu_cs;
+#endif
 
 #include "helper.h"
 #define GEN_HELPER 1
@@ -66,6 +70,10 @@ void cpu_78k0_translate_init(void)
 
     env_pc = tcg_global_mem_new(TCG_AREG0, offsetof(CPUState, pc), "pc");
     cpu_sp = tcg_global_mem_new_i32(TCG_AREG0, offsetof(CPUState, sp), "sp");
+#ifdef TARGET_RL78
+    cpu_es = tcg_global_mem_new_i32(TCG_AREG0, offsetof(CPUState, es), "es");
+    cpu_cs = tcg_global_mem_new_i32(TCG_AREG0, offsetof(CPUState, cs), "cs");
+#endif
 
 #define GEN_HELPER 2
 #include "helper.h"
@@ -79,6 +87,18 @@ static void disas_rl78_insn(DisasContext *s)
     opc = ldub_code(s->pc);
 
     switch (opc) {
+#ifdef TARGET_RL78
+    case 0x41: /* MOV ES, #byte */
+        ins_len = 2;
+        {
+            uint8_t data = ldub_code(s->pc + 1);
+            LOG_ASM("MOV ES, #%02" PRIx8 "H\n", data);
+            TCGv_i32 value = tcg_const_i32(data & 0xf);
+            tcg_gen_mov_i32(cpu_es, value);
+            tcg_temp_free_i32(value);
+        }
+        break;
+#endif
     case 0xCB: /* MOVW sfrp,#word */
         ins_len = 4;
         {
@@ -233,6 +253,10 @@ void cpu_dump_state(CPUState *env, FILE *f, fprintf_function cpu_fprintf,
 {
     cpu_fprintf(f, "PC %05" PRIx32 "\n", env->pc);
     cpu_fprintf(f, "SP  %04" PRIx32 "\n", env->sp);
+#ifdef TARGET_RL78
+    cpu_fprintf(f, "ES    %02" PRIx32 "\n", env->es);
+    cpu_fprintf(f, "CS    %02" PRIx32 "\n", env->cs);
+#endif
 }
 
 void restore_state_to_opc(CPUState *env, TranslationBlock *tb, int pc_pos)
