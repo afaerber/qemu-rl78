@@ -28,6 +28,10 @@ static TCGv_ptr cpu_env;
 
 static TCGv env_pc;
 static TCGv_i32 cpu_sp;
+#ifdef TARGET_RL78
+static TCGv_i32 cpu_es;
+static TCGv_i32 cpu_cs;
+#endif
 
 #include "helper.h"
 #define GEN_HELPER 1
@@ -62,6 +66,10 @@ void cpu_rl78_translate_init(void)
 
     env_pc = tcg_global_mem_new(TCG_AREG0, offsetof(CPU78K0State, pc), "pc");
     cpu_sp = tcg_global_mem_new_i32(TCG_AREG0, offsetof(CPU78K0State, sp), "sp");
+#ifdef TARGET_RL78
+    cpu_es = tcg_global_mem_new_i32(TCG_AREG0, offsetof(CPU78K0State, es), "es");
+    cpu_cs = tcg_global_mem_new_i32(TCG_AREG0, offsetof(CPU78K0State, cs), "cs");
+#endif
 
 #define GEN_HELPER 2
 #include "helper.h"
@@ -99,7 +107,24 @@ static int rl78_disas_movw_sfrp_word(RL78CPU *cpu, uint8_t opcode, DisasContext 
     return 4;
 }
 
+#ifdef TARGET_RL78
+/* MOV ES, #byte */
+static int rl78_disas_mov_es_byte(RL78CPU *cpu, uint8_t opcode, DisasContext *s)
+{
+    uint8_t data = cpu_ldub_code(&cpu->env, s->pc + 1);
+    TCGv_i32 value = tcg_const_i32(data & 0xf);
+
+    LOG_ASM("MOV ES, #%02" PRIx8 "H\n", data);
+    tcg_gen_mov_i32(cpu_es, value);
+    tcg_temp_free_i32(value);
+    return 2;
+}
+#endif
+
 static const OpcodeHandler rl78_1st_map[256] = {
+#ifdef TARGET_RL78
+    [0x41] = rl78_disas_mov_es_byte,
+#endif
     [0xCB] = rl78_disas_movw_sfrp_word,
     [0xCF] = rl78_disas_mov_addr16_byte,
 };
@@ -250,4 +275,8 @@ void rl78_cpu_dump_state(CPUState *cs, FILE *f, fprintf_function cpu_fprintf,
 
     cpu_fprintf(f, "PC %05" PRIx32 "\n\n", cpu->env.pc);
     cpu_fprintf(f, "SP  %04" PRIx32 "\n", cpu->env.sp);
+#ifdef TARGET_RL78
+    cpu_fprintf(f, "ES    %02" PRIx32 "\n", cpu->env.es);
+    cpu_fprintf(f, "CS    %02" PRIx32 "\n", cpu->env.cs);
+#endif
 }

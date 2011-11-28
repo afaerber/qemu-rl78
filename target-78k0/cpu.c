@@ -38,6 +38,9 @@ static void rl78_cpu_reset(CPUState *cs)
     tlb_flush(&cpu->env, 1);
 
     memset(&cpu->env, 0, offsetof(CPU78K0State, breakpoints));
+#ifdef TARGET_RL78
+    cpu->env.es = 0x0f;
+#endif
 
     rom = rom_ptr(0x00000);
     if (rom == NULL) {
