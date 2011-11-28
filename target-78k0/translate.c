@@ -81,7 +81,7 @@ void cpu_78k0_translate_init(void)
 
 static void disas_rl78_insn(DisasContext *s)
 {
-    uint8_t opc;
+    uint8_t opc, opc2;
     int ins_len = 1;
 
     opc = ldub_code(s->pc);
@@ -123,6 +123,19 @@ static void disas_rl78_insn(DisasContext *s)
             tcg_gen_qemu_st8(value, addr, 0);
             tcg_temp_free(addr);
             tcg_temp_free(value);
+        }
+        break;
+
+    case 0x61: /* 2nd MAP */
+        opc2 = ldub_code(s->pc + 1);
+        ins_len++;
+        switch (opc2) {
+        default:
+            qemu_log("unimplemented 0x%" PRIx8 " opcode 0x%" PRIx8 "\n", opc, opc2);
+            // TODO
+            tcg_gen_movi_tl(env_pc, s->pc);
+            s->is_jmp = DISAS_UPDATE;
+            break;
         }
         break;
     default:
