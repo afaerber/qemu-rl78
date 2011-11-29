@@ -149,6 +149,14 @@ static void gen_get_gpr_addr16(TCGv ret, RL78GPR16 reg)
     tcg_gen_addi_tl(ret, ret, reg);
 }
 
+static void gen_gpr_ld16u(TCGv ret, RL78GPR16 reg)
+{
+    TCGv addr = tcg_temp_new();
+    gen_get_gpr_addr16(addr, reg);
+    tcg_gen_qemu_ld16u(ret, addr, 0);
+    tcg_temp_free(addr);
+}
+
 static void gen_gpr_st16(RL78GPR16 reg, TCGv val)
 {
     TCGv addr = tcg_temp_new();
@@ -257,6 +265,40 @@ static void disas_rl78_insn(DisasContext *s)
         opc2 = ldub_code(s->pc + 1);
         ins_len++;
         switch (opc2) {
+        case 0x1e: /* SHRW AX, 1 */
+        case 0x2e: /* SHRW AX, 2 */
+        case 0x3e: /* SHRW AX, 3 */
+        case 0x4e: /* SHRW AX, 4 */
+        case 0x5e: /* SHRW AX, 5 */
+        case 0x6e: /* SHRW AX, 6 */
+        case 0x7e: /* SHRW AX, 7 */
+        case 0x8e: /* SHRW AX, 8 */
+        case 0x9e: /* SHRW AX, 9 */
+        case 0xae: /* SHRW AX, 10 */
+        case 0xbe: /* SHRW AX, 11 */
+        case 0xce: /* SHRW AX, 12 */
+        case 0xde: /* SHRW AX, 13 */
+        case 0xee: /* SHRW AX, 14 */
+        case 0xfe: /* SHRW AX, 15 */
+            {
+                unsigned int cnt = opc2 >> 4;
+                TCGv tmp;
+                TCGv_i32 cy;
+                LOG_ASM("SHRW AX, %u\n", cnt);
+                tmp = tcg_temp_new();
+                gen_gpr_ld16u(tmp, RP_AX);
+
+                cy = tcg_temp_new_i32();
+                tcg_gen_trunc_tl_i32(cy, tmp);
+                tcg_gen_shri_i32(cy, cy, cnt - 1);
+                tcg_gen_deposit_i32(cpu_psw, cpu_psw, cy, PSW_CY_SHIFT, 1);
+                tcg_temp_free_i32(cy);
+
+                tcg_gen_shri_tl(tmp, tmp, cnt);
+                gen_gpr_st16(RP_AX, tmp);
+                tcg_temp_free(tmp);
+            }
+            break;
         default:
             qemu_log("unimplemented 0x%" PRIx8 " opcode 0x%" PRIx8 "\n", opc, opc2);
             // TODO
