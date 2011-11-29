@@ -145,6 +145,14 @@ static void gen_get_gpr_addr16(TCGv ret, RL78GPR16 reg)
     tcg_gen_addi_tl(ret, ret, reg);
 }
 
+static void gen_gpr_ld16u(TCGv ret, RL78GPR16 reg)
+{
+    TCGv addr = tcg_temp_new();
+    gen_get_gpr_addr16(addr, reg);
+    tcg_gen_qemu_ld16u(ret, addr, 0);
+    tcg_temp_free(addr);
+}
+
 static void gen_gpr_st16(RL78GPR16 reg, TCGv val)
 {
     TCGv addr = tcg_temp_new();
@@ -184,7 +192,60 @@ static const OpcodeHandler rl78_2nd_map[256] = {
     [0xff] = rl78_disas_sel_rb,
 };
 
+/* SHRW AX, 1   (0x1e)
+ * SHRW AX, 2   (0x2e)
+ * SHRW AX, 3   (0x3e)
+ * SHRW AX, 4   (0x4e)
+ * SHRW AX, 5   (0x5e)
+ * SHRW AX, 6   (0x6e)
+ * SHRW AX, 7   (0x7e)
+ * SHRW AX, 8   (0x8e)
+ * SHRW AX, 9   (0x9e)
+ * SHRW AX, 10  (0xae)
+ * SHRW AX, 11  (0xbe)
+ * SHRW AX, 12  (0xce)
+ * SHRW AX, 13  (0xde)
+ * SHRW AX, 14  (0xee)
+ * SHRW AX, 15  (0xfe) */
+static int rl78_disas_shrw_ax(RL78CPU *cpu, uint8_t opcode, DisasContext *s)
+{
+    unsigned int cnt = opcode >> 4;
+    TCGv tmp;
+    TCGv_i32 cy;
+
+    LOG_ASM("SHRW AX, %u\n", cnt);
+    tmp = tcg_temp_new();
+    gen_gpr_ld16u(tmp, RP_AX);
+
+    cy = tcg_temp_new_i32();
+    tcg_gen_trunc_tl_i32(cy, tmp);
+    tcg_gen_shri_i32(cy, cy, cnt - 1);
+    tcg_gen_deposit_i32(cpu_psw, cpu_psw, cy, PSW_CY_SHIFT, 1);
+    tcg_temp_free_i32(cy);
+
+    tcg_gen_shri_tl(tmp, tmp, cnt);
+    gen_gpr_st16(RP_AX, tmp);
+    tcg_temp_free(tmp);
+
+    return 2;
+}
+
 static const OpcodeHandler rl78_4th_map[256] = {
+    [0x1e] = rl78_disas_shrw_ax,
+    [0x2e] = rl78_disas_shrw_ax,
+    [0x3e] = rl78_disas_shrw_ax,
+    [0x4e] = rl78_disas_shrw_ax,
+    [0x5e] = rl78_disas_shrw_ax,
+    [0x6e] = rl78_disas_shrw_ax,
+    [0x7e] = rl78_disas_shrw_ax,
+    [0x8e] = rl78_disas_shrw_ax,
+    [0x9e] = rl78_disas_shrw_ax,
+    [0xae] = rl78_disas_shrw_ax,
+    [0xbe] = rl78_disas_shrw_ax,
+    [0xce] = rl78_disas_shrw_ax,
+    [0xde] = rl78_disas_shrw_ax,
+    [0xee] = rl78_disas_shrw_ax,
+    [0xfe] = rl78_disas_shrw_ax,
 };
 
 /* MOV !addr16,#byte */
