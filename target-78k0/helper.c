@@ -33,10 +33,14 @@ void cpu_reset(CPUState *env)
 {
     uint8_t *rom;
     uint16_t reset_vector;
+    target_phys_addr_t addr;
 
     tlb_flush(env, 1);
 
     memset(env, 0, offsetof(CPUState, breakpoints));
+    for (addr = 0xffee0; addr < 0xfff00; addr += 2) {
+        stw_phys(addr, 0);
+    }
 #ifdef TARGET_RL78
     env->psw = 0x06;
     env->es = 0x0f;
