@@ -184,6 +184,9 @@ static const OpcodeHandler rl78_2nd_map[256] = {
     [0xff] = rl78_disas_sel_rb,
 };
 
+static const OpcodeHandler rl78_4th_map[256] = {
+};
+
 /* MOV !addr16,#byte */
 static int rl78_disas_mov_addr16_byte(RL78CPU *cpu, uint8_t opcode, DisasContext *s)
 {
@@ -263,8 +266,27 @@ static int rl78_disas_2nd_map(RL78CPU *cpu, uint8_t opc, DisasContext *s)
     }
 }
 
+/* 4th MAP */
+static int rl78_disas_4th_map(RL78CPU *cpu, uint8_t opc, DisasContext *s)
+{
+    uint8_t opc2;
+
+    opc2 = cpu_ldub_code(&cpu->env, s->pc + 1);
+
+    if (likely(rl78_4th_map[opc2] != NULL)) {
+        return rl78_4th_map[opc2](cpu, opc2, s);
+    } else {
+        qemu_log("unimplemented 0x%" PRIx8 " opcode 0x%" PRIx8 "\n", opc, opc2);
+        // TODO
+        tcg_gen_movi_tl(env_pc, s->pc);
+        s->is_jmp = DISAS_UPDATE;
+        return 2;
+    }
+}
+
 static const OpcodeHandler rl78_1st_map[256] = {
     [0x30] = rl78_disas_movw_rp_word,
+    [0x31] = rl78_disas_4th_map,
     [0x32] = rl78_disas_movw_rp_word,
     [0x34] = rl78_disas_movw_rp_word,
     [0x36] = rl78_disas_movw_rp_word,
