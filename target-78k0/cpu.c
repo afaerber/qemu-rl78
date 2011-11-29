@@ -32,12 +32,16 @@ static void rl78_cpu_reset(CPUState *cs)
     RL78CPUClass *rcc = RL78_CPU_GET_CLASS(cs);
     uint8_t *rom;
     uint16_t reset_vector;
+    hwaddr addr;
 
     rcc->parent_reset(cs);
 
     tlb_flush(&cpu->env, 1);
 
     memset(&cpu->env, 0, offsetof(CPU78K0State, breakpoints));
+    for (addr = 0xffee0; addr < 0xfff00; addr += 2) {
+        stw_phys(addr, 0);
+    }
 #ifdef TARGET_RL78
     cpu->env.psw = 0x06;
     cpu->env.es = 0x0f;
