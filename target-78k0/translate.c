@@ -253,6 +253,18 @@ static void disas_rl78_insn(DisasContext *s)
             break;
         }
         break;
+    case 0x31: /* 4th MAP */
+        opc2 = ldub_code(s->pc + 1);
+        ins_len++;
+        switch (opc2) {
+        default:
+            qemu_log("unimplemented 0x%" PRIx8 " opcode 0x%" PRIx8 "\n", opc, opc2);
+            // TODO
+            tcg_gen_movi_tl(env_pc, s->pc);
+            s->is_jmp = DISAS_UPDATE;
+            break;
+        }
+        break;
     default:
         qemu_log("unimplemented opcode 0x%" PRIx8 "\n", opc);
         // TODO
