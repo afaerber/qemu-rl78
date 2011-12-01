@@ -295,6 +295,36 @@ static int rl78_disas_movw_sfrp_word(RL78CPU *cpu, uint8_t opcode, DisasContext 
     return 4;
 }
 
+/* CMPW AX, #word */
+static int rl78_disas_cmpw_ax_word(RL78CPU *cpu, uint8_t opcode, DisasContext *s)
+{
+    uint16_t data = cpu_lduw_code(&cpu->env, s->pc + 1);
+    TCGv_i32 value, ax, tmp, flag;
+    TCGv tmp2;
+
+    LOG_ASM("CMPW AX, #%04" PRIx16 "H\n", data);
+    value = tcg_const_i32(data);
+    tmp2 = tcg_temp_new();
+    gen_gpr_ld16u(tmp2, RP_AX);
+    ax = tcg_temp_new_i32();
+    tcg_gen_trunc_tl_i32(ax, tmp2);
+    tcg_temp_free(tmp2);
+
+    tmp = tcg_temp_new_i32();
+    tcg_gen_sub_i32(tmp, ax, value);
+
+    flag = tcg_temp_new_i32();
+    tcg_gen_setcondi_i32(TCG_COND_EQ, flag, tmp, 0);
+    tcg_gen_deposit_i32(cpu_psw, cpu_psw, flag, PSW_Z_SHIFT, 1);
+    /* TODO Update CY */
+    tcg_temp_free_i32(flag);
+
+    tcg_temp_free_i32(tmp);
+    tcg_temp_free_i32(ax);
+    tcg_temp_free_i32(value);
+    return 3;
+}
+
 #ifdef TARGET_RL78
 /* MOV ES, #byte */
 static int rl78_disas_mov_es_byte(RL78CPU *cpu, uint8_t opcode, DisasContext *s)
@@ -354,6 +384,7 @@ static const OpcodeHandler rl78_1st_map[256] = {
 #ifdef TARGET_RL78
     [0x41] = rl78_disas_mov_es_byte,
 #endif
+    [0x44] = rl78_disas_cmpw_ax_word,
     [0x61] = rl78_disas_2nd_map,
     [0xCB] = rl78_disas_movw_sfrp_word,
     [0xCF] = rl78_disas_mov_addr16_byte,
