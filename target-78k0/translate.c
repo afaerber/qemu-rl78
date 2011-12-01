@@ -216,6 +216,34 @@ static void disas_rl78_insn(DisasContext *s)
         }
         break;
 #endif
+    case 0x44: /* CMPW AX, #word */
+        ins_len = 3;
+        {
+            uint16_t data = lduw_code(s->pc + 1);
+            TCGv_i32 value, ax, tmp, flag;
+            TCGv tmp2;
+            LOG_ASM("CMPW AX, #%04" PRIx16 "H\n", data);
+            value = tcg_const_i32(data);
+            tmp2 = tcg_temp_new();
+            gen_gpr_ld16u(tmp2, RP_AX);
+            ax = tcg_temp_new_i32();
+            tcg_gen_trunc_tl_i32(ax, tmp2);
+            tcg_temp_free(tmp2);
+
+            tmp = tcg_temp_new_i32();
+            tcg_gen_sub_i32(tmp, ax, value);
+
+            flag = tcg_temp_new_i32();
+            tcg_gen_setcondi_i32(TCG_COND_EQ, flag, tmp, 0);
+            tcg_gen_deposit_i32(cpu_psw, cpu_psw, flag, PSW_Z_SHIFT, 1);
+            /* TODO Update CY */
+            tcg_temp_free_i32(flag);
+
+            tcg_temp_free_i32(tmp);
+            tcg_temp_free_i32(ax);
+            tcg_temp_free_i32(value);
+        }
+        break;
     case 0xCB: /* MOVW sfrp,#word */
         ins_len = 4;
         {
