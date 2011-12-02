@@ -2127,6 +2127,8 @@ static inline void tcg_gen_deposit_i64(TCGv_i64 ret, TCGv_i64 arg1,
 
 #if TARGET_LONG_BITS == 32
 #define TCGv TCGv_i32
+#define MAKE_TCGV_TL(x) MAKE_TCGV_I32(x)
+#define GET_TCGV_TL(t) GET_TCGV_I32(t)
 #define tcg_temp_new() tcg_temp_new_i32()
 #define tcg_global_reg_new tcg_global_reg_new_i32
 #define tcg_global_mem_new tcg_global_mem_new_i32
@@ -2138,6 +2140,8 @@ static inline void tcg_gen_deposit_i64(TCGv_i64 ret, TCGv_i64 arg1,
 #define TCGV_EQUAL(a, b) TCGV_EQUAL_I32(a, b)
 #else
 #define TCGv TCGv_i64
+#define MAKE_TCGV_TL(x) MAKE_TCGV_I64(x)
+#define GET_TCGV_TL(t) GET_TCGV_I64(t)
 #define tcg_temp_new() tcg_temp_new_i64()
 #define tcg_global_reg_new tcg_global_reg_new_i64
 #define tcg_global_mem_new tcg_global_mem_new_i64
