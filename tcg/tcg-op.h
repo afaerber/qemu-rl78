@@ -2129,15 +2129,14 @@ static inline void tcg_gen_deposit_i64(TCGv_i64 ret, TCGv_i64 arg1,
 #define TCGv TCGv_i32
 #define MAKE_TCGV_TL(x) MAKE_TCGV_I32(x)
 #define GET_TCGV_TL(t) GET_TCGV_I32(t)
-#define TCGV_UNUSED(x) TCGV_UNUSED_I32(x)
-#define TCGV_EQUAL(a, b) TCGV_EQUAL_I32(a, b)
 #else
 #define TCGv TCGv_i64
 #define MAKE_TCGV_TL(x) MAKE_TCGV_I64(x)
 #define GET_TCGV_TL(t) GET_TCGV_I64(t)
-#define TCGV_UNUSED(x) TCGV_UNUSED_I64(x)
-#define TCGV_EQUAL(a, b) TCGV_EQUAL_I64(a, b)
 #endif
+
+#define TCGV_UNUSED(x) x = MAKE_TCGV_TL(-1)
+#define TCGV_EQUAL(a, b) (GET_TCGV_TL(a) == GET_TCGV_TL(b))
 
 static inline TCGv tcg_temp_new(void)
 {
