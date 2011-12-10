@@ -189,6 +189,7 @@ typedef tcg_target_ulong TCGArg;
 
 #ifdef CONFIG_DEBUG_TCG
 #define DEBUG_TCGV 1
+//#define DEBUG_TCGV_TL
 #endif
 
 #ifdef DEBUG_TCGV

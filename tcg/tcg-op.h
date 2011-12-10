@@ -2125,6 +2125,18 @@ static inline void tcg_gen_deposit_i64(TCGv_i64 ret, TCGv_i64 arg1,
 #error must include QEMU headers
 #endif
 
+#if defined(DEBUG_TCGV) && defined(DEBUG_TCGV_TL)
+
+typedef struct {
+    int itl;
+} TCGv;
+
+#define MAKE_TCGV_TL(i) __extension__                  \
+    ({ TCGv make_tcgv_tmp = {i}; make_tcgv_tmp; })
+#define GET_TCGV_TL(t) ((t).itl)
+
+#else /* !DEBUG_TCGV_TL */
+
 #if TARGET_LONG_BITS == 32
 #define TCGv TCGv_i32
 #define MAKE_TCGV_TL(x) MAKE_TCGV_I32(x)
@@ -2134,6 +2146,8 @@ static inline void tcg_gen_deposit_i64(TCGv_i64 ret, TCGv_i64 arg1,
 #define MAKE_TCGV_TL(x) MAKE_TCGV_I64(x)
 #define GET_TCGV_TL(t) GET_TCGV_I64(t)
 #endif
+
+#endif /* !DEBUG_TCGV_TL */
 
 #define TCGV_UNUSED(x) x = MAKE_TCGV_TL(-1)
 #define TCGV_EQUAL(a, b) (GET_TCGV_TL(a) == GET_TCGV_TL(b))

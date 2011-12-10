@@ -22,7 +22,10 @@
 
 #define GET_TCGV_i32 GET_TCGV_I32
 #define GET_TCGV_i64 GET_TCGV_I64
+#define GET_TCGV_tl  GET_TCGV_TL
 #define GET_TCGV_ptr GET_TCGV_PTR
+
+#define TCGv_tl TCGv
 
 /* Some types that make sense in C, but not for TCG.  */
 #define dh_alias_i32 i32
@@ -32,11 +35,7 @@
 #define dh_alias_s64 i64
 #define dh_alias_f32 i32
 #define dh_alias_f64 i64
-#if TARGET_LONG_BITS == 32
-#define dh_alias_tl i32
-#else
-#define dh_alias_tl i64
-#endif
+#define dh_alias_tl tl
 #define dh_alias_ptr ptr
 #define dh_alias_void void
 #define dh_alias_noreturn noreturn
@@ -63,6 +62,7 @@
 #define dh_retvar_decl0_noreturn void
 #define dh_retvar_decl0_i32 TCGv_i32 retval
 #define dh_retvar_decl0_i64 TCGv_i64 retval
+#define dh_retvar_decl0_tl  TCGv retval
 #define dh_retvar_decl0_ptr TCGv_ptr retval
 #define dh_retvar_decl0(t) glue(dh_retvar_decl0_, dh_alias(t))
 
@@ -70,6 +70,7 @@
 #define dh_retvar_decl_noreturn
 #define dh_retvar_decl_i32 TCGv_i32 retval,
 #define dh_retvar_decl_i64 TCGv_i64 retval,
+#define dh_retvar_decl_tl  TCGv retval,
 #define dh_retvar_decl_ptr TCGv_ptr retval,
 #define dh_retvar_decl(t) glue(dh_retvar_decl_, dh_alias(t))
 
@@ -77,6 +78,7 @@
 #define dh_retvar_noreturn TCG_CALL_DUMMY_ARG
 #define dh_retvar_i32 GET_TCGV_i32(retval)
 #define dh_retvar_i64 GET_TCGV_i64(retval)
+#define dh_retvar_tl  GET_TCGV_tl(retval)
 #define dh_retvar_ptr GET_TCGV_ptr(retval)
 #define dh_retvar(t) glue(dh_retvar_, dh_alias(t))
 
@@ -84,6 +86,7 @@
 #define dh_is_64bit_noreturn 0
 #define dh_is_64bit_i32 0
 #define dh_is_64bit_i64 1
+#define dh_is_64bit_tl (TARGET_LONG_BITS == 64)
 #define dh_is_64bit_ptr (TCG_TARGET_REG_BITS == 64)
 #define dh_is_64bit(t) glue(dh_is_64bit_, dh_alias(t))
 
