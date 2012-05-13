@@ -25,9 +25,14 @@
 /* CPUClass::reset() */
 static void rl78_cpu_reset(CPUState *cs)
 {
+    RL78CPU *cpu = RL78_CPU(cs);
     RL78CPUClass *rcc = RL78_CPU_GET_CLASS(cs);
 
     rcc->parent_reset(cs);
+
+    tlb_flush(&cpu->env, 1);
+
+    memset(&cpu->env, 0, offsetof(CPU78K0State, breakpoints));
 }
 
 static void rl78_cpu_set_pc(CPUState *cs, vaddr value)
